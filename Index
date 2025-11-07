@@ -1,187 +1,130 @@
-<!doctype html>
-<html>
+<!DOCTYPE html>
+<html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <title>ClayAlert Control Panel</title>
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ClayAlert! Cloud Control Panel</title>
   <style>
-    body { font-family: system-ui, -apple-system, Roboto, "Helvetica Neue", Arial; max-width:900px; margin:20px auto; padding:10px; }
-    label{display:block;margin-top:12px;font-weight:600}
-    input[type=text], textarea{width:100%;padding:8px;margin-top:6px;border:1px solid #ccc;border-radius:6px}
-    .row { display:flex; gap:12px; align-items:center }
-    .small { width:120px }
-    button{padding:8px 12px;border-radius:8px;border:0;background:#2563eb;color:white;margin-top:12px }
-    .muted{ color:#666; font-size:0.9em }
-    .checkboxes{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
-    .card{border:1px solid #eee;padding:12px;border-radius:8px;margin-top:12px;background:#fafafa}
+    body {
+      font-family: Arial, sans-serif;
+      background: linear-gradient(to bottom, #e8f4ff, #ffffff);
+      color: #003366;
+      margin: 0;
+      padding: 0;
+      text-align: center;
+    }
+    header {
+      background-color: #0078d7;
+      color: white;
+      padding: 1rem;
+      font-size: 1.5rem;
+      font-weight: bold;
+    }
+    main {
+      max-width: 400px;
+      margin: 2rem auto;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      padding: 2rem;
+    }
+    label {
+      display: block;
+      text-align: left;
+      margin-bottom: 0.3rem;
+      font-weight: bold;
+    }
+    input[type="email"], input[type="text"] {
+      width: 100%;
+      padding: 0.6rem;
+      margin-bottom: 1rem;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+    }
+    .alert-options {
+      text-align: left;
+      margin-bottom: 1rem;
+    }
+    button {
+      background-color: #0078d7;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      padding: 0.8rem 1.2rem;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+    button:hover {
+      background-color: #005ea8;
+    }
+    #status {
+      margin-top: 1rem;
+      font-weight: bold;
+    }
   </style>
 </head>
 <body>
-  <h1>ClayAlert Control Panel</h1>
-  <p class="muted">Edit settings for the cloud ClayAlert system. This page saves a JSON file inside a GitHub Gist.</p>
+  <header>ClayAlert! Cloud Control Panel</header>
 
-  <div class="card">
-    <label>Gist ID (config file location)</label>
-    <input id="gistId" type="text" placeholder="Gist ID (example: 012345abcdef...)" />
+  <main>
+    <h2>Manage Your Alert Settings</h2>
 
-    <label>Gist Filename</label>
-    <input id="gistFilename" type="text" value="clay_alert_config.json" />
+    <label for="email">Alert Email:</label>
+    <input type="email" id="email" placeholder="you@example.com" required>
 
-    <label>Emails (comma-separated)</label>
-    <input id="emails" type="text" placeholder="gf1aoy...@gw.notify.events, member@example.com" />
+    <label for="location">Location:</label>
+    <input type="text" id="location" placeholder="Houston, TX" required>
 
-    <label>NWS Zones (comma-separated)</label>
-    <input id="zones" type="text" placeholder="TXZ213,TXZ237" />
-
-    <label>Alert Types (comma-separated — or 'All')</label>
-    <input id="alertTypes" type="text" placeholder="Tornado,Severe Thunderstorm,Flood,Tropical,All" />
-
-    <div style="margin-top:10px">
-      <label><input id="includeTropical" type="checkbox" /> Include Tropical Alerts</label>
+    <div class="alert-options">
+      <label>Alert Types:</label>
+      <input type="checkbox" name="alert" value="storms"> Storms<br>
+      <input type="checkbox" name="alert" value="tropical"> Tropical Systems<br>
+      <input type="checkbox" name="alert" value="floods"> Flood Alerts<br>
+      <input type="checkbox" name="alert" value="heat"> Heat Warnings<br>
     </div>
 
-    <div style="margin-top:10px">
-      <label>Tropical Lifecycle Notification Settings</label>
-      <div class="checkboxes">
-        <label><input id="l_formed" type="checkbox" /> Formed</label>
-        <label><input id="l_upgrade" type="checkbox" /> Upgraded</label>
-        <label><input id="l_downgrade" type="checkbox" /> Downgraded</label>
-        <label><input id="l_dissipate" type="checkbox" /> Dissipated</label>
-      </div>
-    </div>
+    <button onclick="saveSettings()">💾 Save Settings</button>
 
-    <label>Tropical feed URL (optional)</label>
-    <input id="tropicalFeed" type="text" placeholder="Optional feed URL for NHC JSON" />
-
-    <div style="margin-top:12px" class="row">
-      <div style="flex:1">
-        <label>When saving, enter GitHub Personal Access Token (only needed to SAVE)</label>
-        <input id="githubToken" type="text" placeholder="ghp_xxx (never share this)" />
-        <div class="muted">Token must have 'gist' scope to edit the gist.</div>
-      </div>
-      <div style="width:200px">
-        <label>&nbsp;</label>
-        <button id="saveBtn">Save Settings to Gist</button>
-      </div>
-    </div>
-
-    <div style="margin-top:14px">
-      <button id="loadBtn">Load Current Settings</button>
-      <button id="showJsonBtn">Show JSON</button>
-    </div>
-
-    <pre id="jsonOutput" style="display:none; margin-top:12px; padding:10px; background:#fff; border-radius:6px; border:1px solid #eee; max-height:340px; overflow:auto"></pre>
-  </div>
+    <p id="status"></p>
+  </main>
 
   <script>
-    const gistApi = (id) => `https://api.github.com/gists/${id}`;
+    const apiURL = "https://3i7jm1jwih.execute-api.us-east-1.amazonaws.com/";
 
-    async function loadConfig() {
-      const gistId = document.getElementById("gistId").value.trim();
-      const filename = document.getElementById("gistFilename").value || "clay_alert_config.json";
-      if (!gistId) { alert("Enter Gist ID first"); return; }
-      try {
-        const resp = await fetch(gistApi(gistId), {headers: {Accept: "application/vnd.github+json"}});
-        if (!resp.ok) throw new Error("Failed to fetch gist: " + resp.status);
-        const data = await resp.json();
-        const files = data.files || {};
-        if (!files[filename]) {
-          // show default empty config
-          setFormFromConfig({});
-          alert("Filename not found in gist; a new file will be created when you save.");
-          return;
-        }
-        const content = files[filename].content || "{}";
-        const cfg = JSON.parse(content);
-        setFormFromConfig(cfg);
-        document.getElementById("jsonOutput").textContent = JSON.stringify(cfg, null, 2);
-      } catch (e) {
-        alert("Load failed: " + e);
-        console.error(e);
+    async function saveSettings() {
+      const email = document.getElementById('email').value.trim();
+      const location = document.getElementById('location').value.trim();
+      const alerts = Array.from(document.querySelectorAll('input[name="alert"]:checked')).map(a => a.value);
+
+      const status = document.getElementById('status');
+      status.textContent = "Sending settings...";
+
+      if (!email || !location) {
+        status.textContent = "⚠️ Please fill out all fields.";
+        return;
       }
-    }
 
-    function setFormFromConfig(cfg) {
-      document.getElementById("emails").value = (cfg.emails || []).join(", ");
-      document.getElementById("zones").value = (cfg.zones || []).join(", ");
-      document.getElementById("alertTypes").value = (cfg.alert_types || []).join(", ") || "All";
-      document.getElementById("includeTropical").checked = !!cfg.include_tropical;
-      const lifecycle = cfg.tropical_lifecycle || {formed:true,upgrade:true,downgrade:true,dissipate:true};
-      document.getElementById("l_formed").checked = !!lifecycle.formed;
-      document.getElementById("l_upgrade").checked = !!lifecycle.upgrade;
-      document.getElementById("l_downgrade").checked = !!lifecycle.downgrade;
-      document.getElementById("l_dissipate").checked = !!lifecycle.dissipate;
-      document.getElementById("tropicalFeed").value = cfg.tropical_feed_url || "";
-    }
-
-    function buildConfigFromForm() {
-      const emails = document.getElementById("emails").value.split(",").map(s=>s.trim()).filter(Boolean);
-      const zones = document.getElementById("zones").value.split(",").map(s=>s.trim()).filter(Boolean);
-      const alert_types = document.getElementById("alertTypes").value.split(",").map(s=>s.trim()).filter(Boolean);
-      const include_tropical = document.getElementById("includeTropical").checked;
-      const tropical_lifecycle = {
-        formed: document.getElementById("l_formed").checked,
-        upgrade: document.getElementById("l_upgrade").checked,
-        downgrade: document.getElementById("l_downgrade").checked,
-        dissipate: document.getElementById("l_dissipate").checked
-      };
-      const tropical_feed_url = document.getElementById("tropicalFeed").value.trim();
-      return {
-        emails, zones, alert_types, include_tropical, tropical_lifecycle, tropical_feed_url
-      };
-    }
-
-    async function saveConfigToGist() {
-      const gistId = document.getElementById("gistId").value.trim();
-      const filename = document.getElementById("gistFilename").value || "clay_alert_config.json";
-      const token = document.getElementById("githubToken").value.trim();
-      if (!gistId) { alert("Gist ID required"); return; }
-      if (!token) {
-        if (!confirm("No GitHub token provided — you cannot save without a token. Create a token with 'gist' scope. Proceed?")) return;
-      }
-      const cfg = buildConfigFromForm();
-      const payload = { files: {} };
-      payload.files[filename] = { content: JSON.stringify(cfg, null, 2) };
+      const payload = { email, location, alerts };
 
       try {
-        const resp = await fetch(gistApi(gistId), {
-          method: "PATCH",
-          headers: {
-            "Accept": "application/vnd.github+json",
-            "Content-Type": "application/json",
-            "Authorization": `token ${token}`
-          },
+        const response = await fetch(apiURL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload)
         });
-        if (!resp.ok) {
-          const txt = await resp.text();
-          throw new Error("Failed to save gist: " + resp.status + " " + txt);
+
+        if (response.ok) {
+          const data = await response.json();
+          status.textContent = "✅ Settings sent successfully!";
+        } else {
+          status.textContent = "❌ Failed to send settings.";
         }
-        alert("Saved config to gist successfully.");
-      } catch (e) {
-        alert("Save failed: " + e);
-        console.error(e);
+      } catch (error) {
+        console.error(error);
+        status.textContent = "🚨 Error connecting to ClayAlert! server.";
       }
     }
-
-    document.getElementById("loadBtn").addEventListener("click", loadConfig);
-    document.getElementById("saveBtn").addEventListener("click", saveConfigToGist);
-    document.getElementById("showJsonBtn").addEventListener("click", ()=>{
-      const cfg = buildConfigFromForm();
-      const el = document.getElementById("jsonOutput");
-      el.style.display = "block";
-      el.textContent = JSON.stringify(cfg, null, 2);
-    });
-
-    // optionally auto-load if gist id prefilled
-    (function init() {
-      const urlParams = new URLSearchParams(window.location.search);
-      const gid = urlParams.get("gist");
-      if (gid) {
-        document.getElementById("gistId").value = gid;
-        loadConfig();
-      }
-    })();
   </script>
 </body>
 </html>
